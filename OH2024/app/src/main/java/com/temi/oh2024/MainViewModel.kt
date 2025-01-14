@@ -383,7 +383,8 @@ class MainViewModel @Inject constructor(
 
                             // add here something to handle the temi being faced forward
                             getPosition().x
-                            if (getPosition().yaw !in 0.95f..1.05f) { // This check should be made to be a bit more robust
+                            if (getPosition().yaw !in 0.80f..1.20f) { // This check should be made to be a bit more robust
+                                Log.i("nodding bug", "${getPosition()}")
                                 robotController.goToPosition(
                                     Position(
                                         getPosition().x,
