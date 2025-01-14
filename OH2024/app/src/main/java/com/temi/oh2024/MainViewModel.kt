@@ -15,7 +15,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.app.ActivityCompat.startActivityForResult
-import androidx.documentfile.provider.DocumentFile
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModel
@@ -150,8 +149,13 @@ class MainViewModel @Inject constructor(
     // ******************** Password Stuff END
 
     //val renderedMap = robotController.renderedMap
+    val renderedMap = robotController.renderedMap
     var mapScale = robotController.mapScale
     val pointerSize = robotController.pointerSize
+
+    fun coordinatesDataForLocations(): List<Triple<String, Float, Float>> {
+        return  robotController.coordinatesDataForLocations()
+    }
 
     // Define the dynamic coordinate conversion
     val dynamicCoordinateConvert: (Float, Float) -> Pair<Float, Float> = { a, b ->
@@ -292,12 +296,12 @@ class MainViewModel @Inject constructor(
 
             launch { // this system will monitor the battery level and return to home base if the battery to bellow 70
                 while (true) {
+                    delay(10000)
                     Log.i("BATTERY LEVEL", "${robotController.getBatteryLevel()}")
                     Log.i("BATTERY LEVEL", "${isValidDetection.value}")
                     if (robotController.getBatteryLevel() < 30) {
                         exitProcess(0)
                     }
-                    delay(100)
                 }
             }
 
@@ -334,7 +338,7 @@ class MainViewModel @Inject constructor(
                                     if (yPosition == YDirection.MISSING) {
                                         robotController.tileAngle(20) // set temi to looking forward again
                                     }
-                                    delay(3000) // delay here prevents system from getting triggered right after exit.
+                                    delay(5000) // delay here prevents system from getting triggered right after exit.
                                     break
                                 }
                             } else if (yPosition == YDirection.CLOSE && state == true) {

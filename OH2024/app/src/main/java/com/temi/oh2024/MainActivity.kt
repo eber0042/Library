@@ -11,6 +11,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
+import androidx.collection.longSetOf
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -21,61 +22,32 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.zIndex
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -94,6 +66,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.Locale
 import kotlin.math.atan2
 import kotlin.math.cos
 import kotlin.math.pow
@@ -105,8 +78,10 @@ import kotlin.math.sqrt
 enum class Screen() {
     Home,
     GeneralQuestions,
-    DirectionsAndLocations,
-    Tours
+    DirectionsAndLocations_Main,
+    DirectionsAndLocations_Collections,
+    DirectionsAndLocations_Facilities,
+    DirectionsAndLocations_Spaces
 }
 
 @Composable
@@ -210,6 +185,7 @@ class MainActivity : ComponentActivity() {
         if (result.resultCode == Activity.RESULT_OK) {
             result.data?.data?.let { uri ->
                 // Pass URI to the UsbManagerHandler to create the file
+                Log.i("USB!", "sent: ${sampleCols}, ${sampleData}")
                 usbManagerHandler.createTextFileOnUsb(uri, "library_map_data.txt", "Columns: $sampleCols\nData: $sampleData")
             }
         }
@@ -254,9 +230,10 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val viewModel: MainViewModel = hiltViewModel()
 
-                viewModel.getMapData()?.mapImage?.let { usbStuff(it.cols, viewModel.getMapData()!!.mapImage.data) }
-
-                Log.i("USB!", "${sampleCols}, ${sampleData}")
+//                // This line of code is used for extracting the map and adding it as a file onto a USB on the Temi
+//                viewModel.getMapData()?.mapImage?.let { usbStuff(it.cols, viewModel.getMapData()!!.mapImage.data) }
+//
+//                Log.i("USB!", "${sampleCols}, ${sampleData}")
                 val currentScreen = remember { mutableStateOf(Screen.Home.name) }
 
                 // Used for resetting the time out event
@@ -315,10 +292,34 @@ class MainActivity : ComponentActivity() {
                                 viewModel
                             )  // Passing viewModel here
                         }
-                        composable(route = Screen.DirectionsAndLocations.name) {
+                        composable(route = Screen.DirectionsAndLocations_Main.name) {
                             viewModel.setGreetMode(false)
                             viewModel.setSpeed(SpeedLevel.HIGH)
-                            DirectionsAndLocationsScreen(
+                            DirectionsAndLocationsScreen_Main(
+                                navController,
+                                viewModel
+                            )  // Passing viewModel here
+                        }
+                        composable(route = Screen.DirectionsAndLocations_Collections.name) {
+                            viewModel.setGreetMode(false)
+                            viewModel.setSpeed(SpeedLevel.HIGH)
+                            DirectionsAndLocationsScreen_Collections(
+                                navController,
+                                viewModel
+                            )  // Passing viewModel here
+                        }
+                        composable(route = Screen.DirectionsAndLocations_Facilities.name) {
+                            viewModel.setGreetMode(false)
+                            viewModel.setSpeed(SpeedLevel.HIGH)
+                            DirectionsAndLocationsScreen_Facilities(
+                                navController,
+                                viewModel
+                            )  // Passing viewModel here
+                        }
+                        composable(route = Screen.DirectionsAndLocations_Spaces.name) {
+                            viewModel.setGreetMode(false)
+                            viewModel.setSpeed(SpeedLevel.HIGH)
+                            DirectionsAndLocationsScreen_Spaces(
                                 navController,
                                 viewModel
                             )  // Passing viewModel here
@@ -462,7 +463,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel) {
         // Button 2
         Button(
             onClick = {
-                navController.navigate(Screen.DirectionsAndLocations.name)
+                navController.navigate(Screen.DirectionsAndLocations_Main.name)
                 viewModel.playSoundEffect(buttonSoundEffect_main)
             },
             modifier = Modifier
@@ -498,6 +499,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel) {
             posterOn = true
             posterPressed = false
             touchScreenIconOn = false
+            imageOpacity.snapTo(1f) // Reset image opacity to 1
         }
     }
 
@@ -510,7 +512,7 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel) {
         }
     }
 
-
+    Log.i("Testing99", "PosterOn: ${posterOn}")
     if (posterOn) {
         Box(
             modifier = Modifier
@@ -609,13 +611,83 @@ fun HomeScreen(navController: NavController, viewModel: MainViewModel) {
 
 }
 
+@Composable
+fun BlackRectangleWithWhiteLine(
+    height: Int,
+    text: String,
+    typingSpeed: Long,
+    sidePadding: Dp // This is the new parameter to control side padding
+) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize() // Fill the screen
+            .padding(bottom = 0.dp) // No padding at the bottom
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.BottomCenter) // Align the box to the bottom center
+                .background(Color.Black) // Black rectangle background
+                .fillMaxWidth() // Fill the width
+                .height(height.dp) // Set dynamic height
+        ) {
+            // White top line
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopStart) // Align to the top of the black box
+                    .fillMaxWidth() // Stretch across the entire width
+                    .height(4.dp) // Height of the white line
+                    .background(Color.White) // White line color
+            )
+
+            // Typing text animation with flexible side padding
+            TypingTextAnimation(
+                text = text,
+                typingSpeed = typingSpeed,
+                sidePadding = sidePadding, // Pass sidePadding to TypingTextAnimation
+                modifier = Modifier
+                    .align(Alignment.Center) // Center the text
+                    .padding(8.dp) // Optional padding around the text
+            )
+        }
+    }
+}
+
+@Composable
+fun TypingTextAnimation(
+    text: String,
+    typingSpeed: Long,
+    sidePadding: Dp,
+    modifier: Modifier = Modifier
+) {
+    var displayedText by remember { mutableStateOf("") }
+
+    LaunchedEffect(text) {
+        // This will make the text appear character by character
+        for (i in text.indices) {
+            displayedText += text[i] // Add one character at a time
+            delay(typingSpeed) // Delay between each character
+        }
+    }
+
+    // Display the animated text
+    Column(
+        modifier = modifier
+            .fillMaxWidth() // Make sure the column takes up the entire width
+            .padding(start = sidePadding, end = sidePadding) // Apply the side padding
+            .wrapContentHeight(Alignment.CenterVertically) // Ensures it stays vertically centered even if multi-line
+    ) {
+        BasicText(
+            text = displayedText,
+            style = TextStyle(color = Color.White, fontSize = 32.sp),
+            modifier = Modifier.fillMaxWidth() // Ensure the text is centered
+        )
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun GeneralQuestionsScreen(
-    navController: NavController,
-    viewModel: MainViewModel
-) {
+fun GeneralQuestionsScreen(navController: NavController, viewModel: MainViewModel) {
     RefreshExit(viewModel, 100)
 
     // Flags
@@ -623,12 +695,19 @@ fun GeneralQuestionsScreen(
     val showWaitSequence by viewModel.isChatGptThinking.collectAsState()
 
     // Add time out for the image
-    val timeoutDuration = 5000L // Timeout duration (5 seconds)
+    val timeoutDuration = 2000L // Timeout duration (5 seconds)
     // Start a timeout event (timeoutDuration) to hide the image
+
+    val talking by viewModel.isTalking.collectAsState()
+
     LaunchedEffect(showImage) {
-        if (showImage) {
-            delay(timeoutDuration) // Wait for timeout
-            viewModel.setShowImageFlag(false) // Hide the image after timeout
+        while (true) {
+            if (showImage && !talking) {
+                delay(timeoutDuration) // Wait for timeout
+                viewModel.setShowImageFlag(false) // Hide the image after timeout
+                break
+            }
+            delay(100)
         }
     }
 
@@ -638,45 +717,32 @@ fun GeneralQuestionsScreen(
         Triple(
             "What is Temi?",
             "Temi is a personal robot designed for various assistive and entertainment tasks. This other sentence is here for testing a particular issues that way or may not occur.",
-            R.drawable.sample_image
+            null
         ),
         Triple(
             "How do I use Temi?",
             "You can use Temi by giving voice commands, using the touchscreen, or the mobile app.",
-            R.drawable.sample_image
+            null
         ),
         Triple(
             "What features does Temi have?",
             "Temi features include autonomous navigation, voice recognition, and video calling.",
-            R.drawable.sample_image
+            null
         ),
         Triple(
             "How can Temi assist me?",
             "Temi can assist you with tasks like scheduling, navigation, and connecting to smart devices.",
-            R.drawable.sample_image
+            null
         ),
         Triple(
             "What are Temi's limitations?",
             "Temi cannot perform heavy lifting or tasks that require physical dexterity.",
-            R.drawable.sample_image
-        ),
-        Triple("SAMPLE", "Sample dialogue for future question 1.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 2.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 3.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 4.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 5.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 6.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 7.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 8.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 9.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 10.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 11.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 12.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 13.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 14.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 15.", null),
-        Triple("SAMPLE", "Sample dialogue for future question 16.", null)
+            null
+        )
     )
+
+    var textForSub = remember { mutableStateOf("If you are seeing this, it is a bug") }
+    var imageToShow = remember { mutableStateOf<Int?>(R.drawable.sample_image) }
 
     Scaffold(
         topBar = {
@@ -688,7 +754,7 @@ fun GeneralQuestionsScreen(
                     Button(
                         onClick = {
                             navController.navigate(Screen.Home.name)
-                            viewModel.playSoundEffect(buttonSoundEffect_secondary)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
                             viewModel.setIsExitingScreen(true)
                         },
                         modifier = Modifier
@@ -702,29 +768,94 @@ fun GeneralQuestionsScreen(
             )
         }
     ) {
-
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally // Center items horizontally
         ) {
+            // This code is for implementing ChatGPT into the application...
+            // as of now it is not going to be used for this application.
+            /*
             // "Ask Question" Button
             Button(
                 onClick = {
                     viewModel.playSoundEffect(buttonSoundEffect_main)
-                    viewModel.askQuestionUi("Just be yourself, keep responses short. If the user says Tammy or Timmy they mean Temi, there is an issue with the text to speech system. Just ignore the issue and treat it as if the said temi")
+
+                    viewModel.askQuestionUi(
+                        "Just be yourself, keep responses short such as two or three sentences. If the user says Tammy or Timmy they mean Temi, there is an issue with the text to speech system. Also you are answering questions for Nanyaung Polytechnic in Singapore."
+                                +
+                                "Here are some general questions regarding the robotics and mechatronics course:\n" +
+                                "\n" +
+                                "                    1. **Entry Requirements:**\n" +
+                                "                    - What are the entry requirements for specific courses for GCE 'O' Level and Nitec/Higher Nitec students?\n" +
+                                "\n" +
+                                "                    2. **Diploma Courses:**\n" +
+                                "                    - What diploma courses are offered at the polytechnic?\n" +
+                                "\n" +
+                                "                    3. **GCE 'O' Level Results:**\n" +
+                                "                    - Can I combine different subject grades from multiple sittings of the GCE 'O' Level exams?\n" +
+                                "\n" +
+                                "                    4. **Direct Entry Programs:**\n" +
+                                "                    - Are there direct entry programs or early admission options available for this course?\n" +
+                                "\n" +
+                                "                    5. **Class Size:**\n" +
+                                "                    - What is the typical class size in lectures and tutorials for this course?\n" +
+                                "\n" +
+                                "                    6. **Specializations and Electives:**\n" +
+                                "                    - Are there specializations or electives within the robotics and mechatronics course?\n" +
+                                "\n" +
+                                "                    7. **University Admission Preparation:**\n" +
+                                "                    - How does the polytechnic prepare students for university admission?\n" +
+                                "\n" +
+                                "                    8. **Internship Opportunities:**\n" +
+                                "                    - What are the internship opportunities for this course?\n" +
+                                "\n" +
+                                "                    9. **Overseas Exchange Programs:**\n" +
+                                "                    - Are there overseas exchange or study programs available?\n" +
+                                "\n" +
+                                "                    10. **Industry Projects and Collaborations:**\n" +
+                                "                    - What kind of industry projects or collaborations can students expect?\n" +
+                                "\n" +
+                                "                    11. **Lab and Facility Tours:**\n" +
+                                "                    - Can we tour the labs and specialized facilities for this course?\n" +
+                                "\n" +
+                                "                    12. **Library and Study Resources:**\n" +
+                                "                    - Is there access to libraries, study spaces, and support services?\n" +
+                                "\n" +
+                                "                    13. **Extracurricular Activities:**\n" +
+                                "                    - Are there facilities for sports, music, and other extracurricular activities?\n" +
+                                "\n" +
+                                "                    14. **Software and Hardware Tools:**\n" +
+                                "                    - What types of software or hardware tools do students have access to?\n" +
+                                "\n" +
+                                "                    15. **Clubs and Societies:**\n" +
+                                "                    - What clubs or societies are available for students to join?\n" +
+                                "\n" +
+                                "                    16. **Mentorship and Peer Support:**\n" +
+                                "                    - Is there a mentorship or peer support system for new students?\n" +
+                                "\n" +
+                                "                    17. **Mental Health and Counseling Services:**\n" +
+                                "                    - How does the polytechnic support students in terms of mental health and counseling services?\n" +
+                                "\n" +
+                                "                    18. **Scholarships and Financial Aid:**\n" +
+                                "                    - Are there scholarships, bursaries, or financial aid available for students?\n" +
+                                "\n" +
+                                "                    19. **Employment Prospects:**\n" +
+                                "                    - What are the employment prospects for graduates from this course?\n" +
+                                "\n" +
+                                "                    20. **Career Services and Alumni Networks:**\n" +
+                                "                    - Are there alumni networks or career services to help students after graduation?"
+                    )
                 },
                 modifier = Modifier
                     .fillMaxWidth(0.5f)
-                    .padding(
-                        bottom = 16.dp,
-                        top = 70.dp
-                    ) // Space below the button
+                    .padding(bottom = 16.dp, top = 70.dp) // Space below the button
                     .height(100.dp)
             ) {
                 Text("Ask Question", fontSize = 48.sp)
             }
+             */
 
             // Scrollable List of Questions
             androidx.compose.foundation.lazy.LazyColumn(
@@ -734,27 +865,24 @@ fun GeneralQuestionsScreen(
                     // Each question as a text item
                     Text(
                         text = question.first,
-                        fontSize = 50.sp,
+                        fontSize = 35.sp,
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(vertical = 8.dp)
                             .wrapContentWidth(Alignment.CenterHorizontally) // Center horizontally
                             .clickable {
-                                viewModel.playSoundEffect(
-                                    buttonSoundEffect_tertiary
-                                )
+                                viewModel.playSoundEffect(buttonSoundEffect_secondary)
                                 viewModel.speakForUi(question.second, true)
-                                if (question.third != null) viewModel.setShowImageFlag(
-                                    true
-                                )
+                                textForSub.value = question.second
+                                viewModel.setShowImageFlag(true)
+                                if (question.third != null) {
+                                    imageToShow.value = question.third
+                                } else imageToShow.value = null
                             },
-                        color = Color.Black // Text color
+                        // color = Color.White // Text color
                     )
                     // Optional divider between items
-                    Divider(
-                        color = androidx.compose.ui.graphics.Color.Black,
-                        thickness = 1.dp
-                    )
+                    Divider(thickness = 1.dp)
                 }
             }
         }
@@ -773,13 +901,18 @@ fun GeneralQuestionsScreen(
                     })
                 }
         ) {
-            Image(
-                painter = painterResource(id = R.drawable.sample_image), // Replace with your image resource
-                contentDescription = "Displayed Image",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .aspectRatio(1f) // Adjust as needed
-            )
+            if (imageToShow.value != null) {
+                Image(
+                    painter = painterResource(id = imageToShow.value!!), // Replace with your image resource
+                    contentDescription = "Displayed Image",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .aspectRatio(1f) // Adjust as needed
+                )
+            }
+
+            BlackRectangleWithWhiteLine(300, textForSub.value, typingSpeed = 40, sidePadding = 40.dp) // You can change typingSpeed here for testing
+
         }
     }
 
@@ -789,17 +922,121 @@ fun GeneralQuestionsScreen(
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
-@SuppressLint(
-    "UnusedMaterial3ScaffoldPaddingParameter",
-    "UseOfNonLambdaOffsetOverload"
-)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UseOfNonLambdaOffsetOverload")
 @Composable
-fun DirectionsAndLocationsScreen(
-    navController: NavController,
-    viewModel: MainViewModel
-) {
+fun DirectionsAndLocationsScreen_Main(navController: NavController, viewModel: MainViewModel) {
     RefreshExit(viewModel, delay = 100)
 
+    var point by remember { mutableIntStateOf(1) }
+
+    // -- Control UI elements --
+    // Button
+    val buttonWidthAndHeight = 500.dp
+    val roundedCorners = 12.dp
+    //Text
+    val fontSize = 30.sp
+
+    val categories = listOf(Pair("Collections", R.drawable.sample_image), Pair("Facilities", R.drawable.sample_image), Pair("Spaces", R.drawable.sample_image))
+    Scaffold(
+        topBar = {
+            // Top App Bar with "Back to Home" button
+            androidx.compose.material3.TopAppBar(
+                title = { Text("Directions/Locations") },
+                actions = {
+                    // Button in the top-right corner
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.Home.name)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
+                            viewModel.setIsExitingScreen(true)
+                        },
+                        modifier = Modifier
+                            .padding(end = 16.dp) // Padding for spacing
+                            .height(60.dp)
+                            .width(120.dp)
+                    ) {
+                        Text("HOME", fontSize = 24.sp)
+                    }
+                }
+            )
+        },
+
+        content = {
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Sample data - in your case, this will come from viewModel.coordinatesDataForLocations()
+
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp), // Padding around the whole LazyRow
+                    horizontalArrangement = Arrangement.Center, // Space between items
+                    verticalAlignment = Alignment.CenterVertically // Center items vertically
+                ) {
+                    items(categories.size) { index ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally, // Aligning content within Column
+                            verticalArrangement = Arrangement.Center // Center items in the Column
+                        ) {
+                            // Button Text as location name or ID
+                            Text(
+                                text = categories[index].first.replaceFirstChar {
+                                    if (it.isLowerCase()) it.titlecase(
+                                        Locale.getDefault()
+                                    ) else it.toString()
+                                },
+                                fontSize = 48.sp,  // Adjust as necessary
+                                color = Color.Black,
+                                modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                            )
+
+                            // Button
+                            Button(
+                                onClick = {
+                                    // Play sound effect
+                                    viewModel.playSoundEffect(buttonSoundEffect_main)
+                                    when (categories[index].first) {
+                                        "Collections" -> {
+                                            navController.navigate(Screen.DirectionsAndLocations_Collections.name)
+                                        }
+                                        "Facilities" -> {
+                                            navController.navigate(Screen.DirectionsAndLocations_Facilities.name)
+                                        }
+                                        else -> {
+                                            navController.navigate(Screen.DirectionsAndLocations_Spaces.name)
+                                        }
+                                    }
+
+                                },
+                                modifier = Modifier
+                                    .width(buttonWidthAndHeight)  // Set button width
+                                    .height(buttonWidthAndHeight)  // Set button height
+                                    .padding(start = 50.dp, end = 50.dp, bottom = 50.dp),  // Add padding around the button itself
+                                shape = RoundedCornerShape(roundedCorners),  // Adjust corner radius
+                            ) {
+                                // Background image inside the Box
+                                Image(
+                                    painter = painterResource(categories[index].second),
+                                    contentDescription = "Button Image",
+                                    modifier = Modifier.fillMaxSize() // Ensure the image fills the button's size
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UseOfNonLambdaOffsetOverload")
+@Composable
+fun DirectionsAndLocationsScreen_Collections(navController: NavController, viewModel: MainViewModel) {
+    RefreshExit(viewModel, delay = 100)
     val showImage by viewModel.showImageFlag.collectAsState()
 
     var point by remember { mutableIntStateOf(1) }
@@ -811,26 +1048,17 @@ fun DirectionsAndLocationsScreen(
         }
 
         2 -> {
-            val (x, y) = Pair(
-                0.0f,
-                0.0f
-            ) // Coordinates for point 1 // Coordinates for point 2
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 2
             Offset(x.toFloat(), y.toFloat())
         }
 
         3 -> {
-            val (x, y) = Pair(
-                0.0f,
-                0.0f
-            ) // Coordinates for point 1 // Coordinates for point 3
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 3
             Offset(x.toFloat(), y.toFloat())
         }
 
         4 -> {
-            val (x, y) = Pair(
-                0.0f,
-                0.0f
-            ) // Coordinates for point 1 // Coordinates for point 4
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 4
             Offset(x.toFloat(), y.toFloat())
         }
 
@@ -839,10 +1067,10 @@ fun DirectionsAndLocationsScreen(
 
     // -- Control UI elements --
     // Button
-    val buttonWidthAndHeight = 400.dp
+    val buttonWidthAndHeight = 500.dp
     val roundedCorners = 12.dp
     //Text
-    val fontSize = 48.sp
+    val fontSize = 30.sp
 
     // MutableState to hold the current position
     val currentNewMethodPosition = remember {
@@ -868,6 +1096,9 @@ fun DirectionsAndLocationsScreen(
         }
     }
 
+    var xMarker by remember {mutableFloatStateOf(0f) }
+    var yMarker by remember { mutableFloatStateOf(0f) }
+
     Scaffold(
         topBar = {
             // Top App Bar with "Back to Home" button
@@ -877,8 +1108,22 @@ fun DirectionsAndLocationsScreen(
                     // Button in the top-right corner
                     Button(
                         onClick = {
+                            navController.navigate(Screen.DirectionsAndLocations_Main.name)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
+                        },
+                        modifier = Modifier
+                            .padding(end = 16.dp) // Padding for spacing
+                            .height(60.dp)
+                            .width(120.dp)
+                    ) {
+                        Text("BACK", fontSize = 24.sp)
+                    }
+
+                    // Button in the top-right corner
+                    Button(
+                        onClick = {
                             navController.navigate(Screen.Home.name)
-                            viewModel.playSoundEffect(buttonSoundEffect_secondary)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
                             viewModel.setIsExitingScreen(true)
                         },
                         modifier = Modifier
@@ -898,85 +1143,61 @@ fun DirectionsAndLocationsScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                // Create the two rows of buttons
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                    modifier = Modifier.fillMaxSize()
+                // Sample data - in your case, this will come from viewModel.coordinatesDataForLocations()
+                val locations = viewModel.coordinatesDataForLocations().take(4)  // First 4 locations
+
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp), // Padding around the whole LazyRow
+                    horizontalArrangement = Arrangement.spacedBy(10.dp), // Space between items
+                    verticalAlignment = Alignment.CenterVertically // Center items vertically
                 ) {
-                    // First row of buttons (test 1, test 2)
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Button(
-                            onClick = {
-                                viewModel.playSoundEffect(buttonSoundEffect_main)
-                                // viewModel.goToPosition(1)
-                                viewModel.setShowImageFlag(true)
-                                point = 1
-                                viewModel.queryLocation("test point 1")
-                            },
-                            modifier = Modifier
-                                .width(buttonWidthAndHeight)
-                                .height(buttonWidthAndHeight),
-                            shape = RoundedCornerShape(roundedCorners) // Adjust corner radius
+                    items(locations.size) { index ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally, // Aligning content within Column
+                            verticalArrangement = Arrangement.Center // Center items in the Column
                         ) {
-                            Text("Test 1", fontSize = fontSize)
-                        }
-                        Spacer(modifier = Modifier.width(16.dp)) // Add space between buttons
-                        Button(
-                            onClick = {
-                                viewModel.playSoundEffect(buttonSoundEffect_main)
-                                // viewModel.goToPosition(2)
-                                viewModel.setShowImageFlag(true)
-                                point = 2
-                                viewModel.queryLocation("test point 2")
-                            },
-                            modifier = Modifier
-                                .width(buttonWidthAndHeight)
-                                .height(buttonWidthAndHeight),
-                            shape = RoundedCornerShape(roundedCorners) // Adjust corner radius
-                        ) {
-                            Text("Test 2", fontSize = fontSize)
-                        }
-                    }
+                            // Button Text as location name or ID
+                            Text(
+                                text = locations[index].first
+                                    .split(" ") // Split the string by spaces
+                                    .joinToString(" ") { it.replaceFirstChar { char -> char.titlecase(Locale.getDefault()) } },
+                                fontSize = 48.sp,  // Adjust as necessary
+                                color = Color.Black,
+                                modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                            )
 
-                    Spacer(modifier = Modifier.height(16.dp)) // Add space between rows
+                            // Button
+                            Button(
+                                onClick = {
+                                    // Play sound effect
+                                    viewModel.playSoundEffect(buttonSoundEffect_main)
 
-                    // Second row of buttons (test 3, test 4)
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Button(
-                            onClick = {
-                                viewModel.playSoundEffect(buttonSoundEffect_main)// viewModel.goToPosition(3)
-                                viewModel.setShowImageFlag(true)
-                                point = 3
-                                viewModel.queryLocation("test point 3")
-                            },
-                            modifier = Modifier
-                                .width(buttonWidthAndHeight)
-                                .height(buttonWidthAndHeight),
-                            shape = RoundedCornerShape(roundedCorners) // Adjust corner radius
-                        ) {
-                            Text("Test 3", fontSize = fontSize)
-                        }
-                        Spacer(modifier = Modifier.width(16.dp)) // Add space between buttons
-                        Button(
-                            onClick = {
-                                viewModel.playSoundEffect(buttonSoundEffect_main)// viewModel.goToPosition(4)
-                                viewModel.setShowImageFlag(true)
-                                point = 4
-                                viewModel.queryLocation("test point 4")
-                            },
-                            modifier = Modifier
-                                .width(buttonWidthAndHeight)
-                                .height(buttonWidthAndHeight),
-                            shape = RoundedCornerShape(roundedCorners) // Adjust corner radius
-                        ) {
-                            Text("Test 4", fontSize = fontSize)
+                                    // Get coordinates for the button pressed
+                                    val coordinates = viewModel.dynamicCoordinateConvert(
+                                        locations[index].second,  // x coordinate
+                                        locations[index].third   // y coordinate
+                                    )
+                                    // Update marker coordinates
+                                    xMarker = coordinates.first
+                                    yMarker = coordinates.second
+
+                                    // Set image visibility flag
+                                    viewModel.setShowImageFlag(true)
+
+                                    // Update point based on button index or some logic
+                                    point = index + 1
+
+                                    // Query location
+                                    viewModel.queryLocation(locations[index].first)
+                                },
+                                modifier = Modifier
+                                    .width(buttonWidthAndHeight)  // Set button width
+                                    .height(buttonWidthAndHeight)  // Set button height
+                                    .padding(start = 50.dp, end = 50.dp, bottom = 50.dp),  // Add padding around the button itself
+                                shape = RoundedCornerShape(roundedCorners),  // Adjust corner radius
+                            ) {}
                         }
                     }
                 }
@@ -984,8 +1205,8 @@ fun DirectionsAndLocationsScreen(
         }
     )
 
-    if (showImage) {//showImage
-        // State to hold the scale and offset
+    if (showImage) { // Display the image and path overlay
+        // State for zoom, pan, and tap gestures
         val scale = remember { mutableStateOf(1f) }
         val offsetX = remember { mutableStateOf(0f) }
         val offsetY = remember { mutableStateOf(0f) }
@@ -997,141 +1218,22 @@ fun DirectionsAndLocationsScreen(
                 .background(Color.Black)
                 .pointerInput(Unit) {
                     detectTransformGestures { _, pan, zoom, _ ->
-                        scale.value = (scale.value * zoom).coerceIn(
-                            0.5f,
-                            5f
-                        ) // Restrict zoom range
+                        scale.value = (scale.value * zoom).coerceIn(0.5f, 5f) // Limit zoom range
                         offsetX.value += pan.x
                         offsetY.value += pan.y
                     }
                 }
-        ) {
-            @Composable
-            fun CreatePath(
-                dotSize: Int,
-                spaceBetweenDots: Int,
-                pathPoints: List<Pair<Int, Int>>, // List of points defining the path
-                currentPosition: Pair<Int, Int>,
-                scale: androidx.compose.runtime.State<Float>, // Pass scale as a parameter
-                offsetX: androidx.compose.runtime.State<Float>, // Pass offsetX as a parameter
-                offsetY: androidx.compose.runtime.State<Float> // Pass offsetY as a parameter
-            ) {
-                // List to hold point data: number, distance, coordinates (pair), and steps
-                val pointData: MutableList<Triple<Int, Int, Pair<Int, Int>>> =
-                    mutableListOf()
-                var numberOfPoints = 0
-                var currentPoint: Pair<Int, Int>
-
-                // Loop through all points except the last one
-                for (i in 0 until pathPoints.size - 1) {
-                    currentPoint = pathPoints[i]
-
-                    fun stepRatio(
-                        startPoint: Pair<Int, Int>,
-                        finishPoint: Pair<Int, Int>,
-                        spaceBetweenDots: Int
-                    ): Pair<Int, Int> {
-                        val xDifference = finishPoint.first - startPoint.first
-                        val yDifference = finishPoint.second - startPoint.second
-
-                        if (xDifference == 0 && yDifference == 0) {
-                            return Pair(0, 0) // No movement needed
-                        } else if (xDifference == 0) {
-                            return Pair(
-                                0,
-                                spaceBetweenDots * if (yDifference > 0) 1 else -1
-                            )
-                        } else if (yDifference == 0) {
-                            return Pair(
-                                spaceBetweenDots * if (xDifference > 0) 1 else -1,
-                                0
-                            )
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        if (!viewModel.isSpeaking.value and !viewModel.isListening.value) {
+                            viewModel.setShowImageFlag(false) // Close image on tap
                         }
-
-                        val angleInRadians =
-                            atan2(yDifference.toFloat(), xDifference.toFloat())
-                        val x = spaceBetweenDots * cos(angleInRadians)
-                        val y = spaceBetweenDots * sin(angleInRadians)
-
-                        return Pair(x.roundToInt(), y.roundToInt())
-                    }
-
-                    // Calculate the total length of the line
-                    val totalDistance = sqrt(
-                        ((pathPoints[i + 1].first - pathPoints[i].first).toDouble()
-                            .pow(2)) +
-                                ((pathPoints[i + 1].second - pathPoints[i].second).toDouble()
-                                    .pow(2))
-                    )
-
-                    // Get step increments
-                    val steps = stepRatio(
-                        pathPoints[i],
-                        pathPoints[i + 1],
-                        spaceBetweenDots
-                    )
-                    var cumulativeDistance = 0.0
-
-                    // Loop through and add points until total distance is covered
-                    while (cumulativeDistance < totalDistance) {
-                        val xDifference =
-                            (currentPoint.first - currentPosition.first).toDouble()
-                        val yDifference =
-                            (currentPoint.second - currentPosition.second).toDouble()
-                        val distance =
-                            sqrt(xDifference.pow(2) + yDifference.pow(2))
-                        pointData.add(
-                            Triple(
-                                numberOfPoints++,
-                                distance.roundToInt(),
-                                Pair(currentPoint.first, currentPoint.second)
-                            )
-                        )
-
-                        // Update current point
-                        currentPoint = Pair(
-                            currentPoint.first + steps.first,
-                            currentPoint.second + steps.second
-                        )
-
-                        // Update cumulative distance
-                        cumulativeDistance = sqrt(
-                            ((currentPoint.first - pathPoints[i].first).toDouble()
-                                .pow(2)) +
-                                    ((currentPoint.second - pathPoints[i].second).toDouble()
-                                        .pow(2))
-                        )
                     }
                 }
-
-                // Find the index of the point with the smallest distance
-                val minDistanceIndex =
-                    pointData.indices.minByOrNull { pointData[it].second } ?: 0
-                currentPoint = pathPoints[0]
-
-                // Render the dots starting from the point with the smallest distance
-                for (i in minDistanceIndex until numberOfPoints) {
-                    val (x, y) = pointData[i].third // Destructure the Pair
-                    Box(
-                        modifier = Modifier
-                            .size(dotSize.dp)
-                            .graphicsLayer(
-                                scaleX = scale.value,
-                                scaleY = scale.value,
-                                translationX = offsetX.value,
-                                translationY = offsetY.value
-                            )
-                            .offset(x = x.dp, y = y.dp)
-                            .background(Color.Red, shape = CircleShape)
-
-                    )
-                }
-            }
-
-//            // Render the main image with zoom and pan applied
-
+        ) {
+            // Render the image with zoom and pan transformations
             Image(
-                painter = painterResource(R.drawable.sample_image), //BitmapPainter(viewModel.renderedMap), // Replace with your image resource
+                painter = BitmapPainter(viewModel.renderedMap), // Replace with your image resource
                 contentDescription = "Displayed Image",
                 modifier = Modifier
                     .graphicsLayer(
@@ -1140,9 +1242,11 @@ fun DirectionsAndLocationsScreen(
                         translationX = offsetX.value,
                         translationY = offsetY.value
                     )
-                    .aspectRatio(viewModel.mapScale) // Adjust as needed
+                    .aspectRatio(viewModel.mapScale) // Maintain aspect ratio if needed
             )
 
+            /*
+             // Render the path points
             CreatePath(
                 dotSize = 8,
                 spaceBetweenDots = 15,
@@ -1160,23 +1264,567 @@ fun DirectionsAndLocationsScreen(
                 offsetX = offsetX,
                 offsetY = offsetY
             )
+             */
 
-            // Pointer image remains fixed (not scaled or moved)
+            Log.i("MAP DATA", "${Pair(xMarker, yMarker)}")
+
+            // Render the red circle with proper scaling and positioning
+            Box(
+                modifier = Modifier
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value,
+                        translationX = offsetX.value + (xMarker * scale.value),
+                        translationY = offsetY.value + (yMarker * scale.value)
+                    )
+                    .size(20.dp) // Size of the circle
+                    .background(Color.Red, shape = CircleShape) // Make it a red circle
+            )
+
+            // Render the pointer image with zoom and pan transformations
             Image(
-                painter = painterResource(id = R.drawable.pointer), // Replace with your image resource
+                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
                 contentDescription = "Pointer Image",
                 modifier = Modifier
-                    .size(viewModel.pointerSize.dp)
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value,
+                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
+                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
+                    )
+                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UseOfNonLambdaOffsetOverload")
+@Composable
+fun DirectionsAndLocationsScreen_Facilities(navController: NavController, viewModel: MainViewModel) {
+    RefreshExit(viewModel, delay = 100)
+    val showImage by viewModel.showImageFlag.collectAsState()
+
+    var point by remember { mutableIntStateOf(1) }
+
+    val position = when (point) {
+        1 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        2 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 2
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        3 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 3
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        4 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 4
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        else -> Offset(0f, 0f) // Default position
+    }
+
+    // -- Control UI elements --
+    // Button
+    val buttonWidthAndHeight = 500.dp
+    val roundedCorners = 12.dp
+    //Text
+    val fontSize = 30.sp
+
+    // MutableState to hold the current position
+    val currentNewMethodPosition = remember {
+        mutableStateOf(
+            viewModel.dynamicCoordinateConvert(
+                viewModel.getPosition().x,
+                viewModel.getPosition().y
+            )
+        )
+    }
+
+    // Observe changes to the position from the viewModel
+    LaunchedEffect(viewModel) {
+        viewModel.positionFlow.collect { newPosition ->
+            val mappedPositionTwo = viewModel.dynamicCoordinateConvert(
+                newPosition.x,
+                newPosition.y
+            )
+
+            currentNewMethodPosition.value = mappedPositionTwo
+
+            delay(100)
+        }
+    }
+
+    var xMarker by remember {mutableFloatStateOf(0f) }
+    var yMarker by remember { mutableFloatStateOf(0f) }
+
+    Scaffold(
+        topBar = {
+            // Top App Bar with "Back to Home" button
+            androidx.compose.material3.TopAppBar(
+                title = { Text("Directions/Locations") },
+                actions = {
+                    // Button in the top-right corner
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.DirectionsAndLocations_Main.name)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
+                        },
+                        modifier = Modifier
+                            .padding(end = 16.dp) // Padding for spacing
+                            .height(60.dp)
+                            .width(120.dp)
+                    ) {
+                        Text("BACK", fontSize = 24.sp)
+                    }
+
+                    // Button in the top-right corner
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.Home.name)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
+                            viewModel.setIsExitingScreen(true)
+                        },
+                        modifier = Modifier
+                            .padding(end = 16.dp) // Padding for spacing
+                            .height(60.dp)
+                            .width(120.dp)
+                    ) {
+                        Text("HOME", fontSize = 24.sp)
+                    }
+                }
+            )
+        },
+
+        content = {
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Sample data - in your case, this will come from viewModel.coordinatesDataForLocations()
+                val locations = viewModel.coordinatesDataForLocations().slice(4..8)  // Next 5 locations
+
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp), // Padding around the whole LazyRow
+                    horizontalArrangement = Arrangement.spacedBy(10.dp), // Space between items
+                    verticalAlignment = Alignment.CenterVertically // Center items vertically
+                ) {
+                    items(locations.size) { index ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally, // Aligning content within Column
+                            verticalArrangement = Arrangement.Center // Center items in the Column
+                        ) {
+                            // Button Text as location name or ID
+                            Text(
+                                text = locations[index].first
+                                    .split(" ") // Split the string by spaces
+                                    .joinToString(" ") { it.replaceFirstChar { char -> char.titlecase(Locale.getDefault()) } },
+                                fontSize = 48.sp,  // Adjust as necessary
+                                color = Color.Black,
+                                modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                            )
+
+                            // Button
+                            Button(
+                                onClick = {
+                                    // Play sound effect
+                                    viewModel.playSoundEffect(buttonSoundEffect_main)
+
+                                    // Get coordinates for the button pressed
+                                    val coordinates = viewModel.dynamicCoordinateConvert(
+                                        locations[index].second,  // x coordinate
+                                        locations[index].third   // y coordinate
+                                    )
+                                    // Update marker coordinates
+                                    xMarker = coordinates.first
+                                    yMarker = coordinates.second
+
+                                    // Set image visibility flag
+                                    viewModel.setShowImageFlag(true)
+
+                                    // Update point based on button index or some logic
+                                    point = index + 1
+
+                                    // Query location
+                                    viewModel.queryLocation(locations[index].first)
+                                },
+                                modifier = Modifier
+                                    .width(buttonWidthAndHeight)  // Set button width
+                                    .height(buttonWidthAndHeight)  // Set button height
+                                    .padding(start = 50.dp, end = 50.dp, bottom = 50.dp),  // Add padding around the button itself
+                                shape = RoundedCornerShape(roundedCorners),  // Adjust corner radius
+                            ) {}
+                        }
+                    }
+                }
+            }
+        }
+    )
+
+    if (showImage) { // Display the image and path overlay
+        // State for zoom, pan, and tap gestures
+        val scale = remember { mutableStateOf(1f) }
+        val offsetX = remember { mutableStateOf(0f) }
+        val offsetY = remember { mutableStateOf(0f) }
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale.value = (scale.value * zoom).coerceIn(0.5f, 5f) // Limit zoom range
+                        offsetX.value += pan.x
+                        offsetY.value += pan.y
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        if (!viewModel.isSpeaking.value and !viewModel.isListening.value) {
+                            viewModel.setShowImageFlag(false) // Close image on tap
+                        }
+                    }
+                }
+        ) {
+            // Render the image with zoom and pan transformations
+            Image(
+                painter = BitmapPainter(viewModel.renderedMap), // Replace with your image resource
+                contentDescription = "Displayed Image",
+                modifier = Modifier
                     .graphicsLayer(
                         scaleX = scale.value,
                         scaleY = scale.value,
                         translationX = offsetX.value,
                         translationY = offsetY.value
                     )
-                    .offset(
-                        x = currentNewMethodPosition.value.first.dp,
-                        y = currentNewMethodPosition.value.second.dp
+                    .aspectRatio(viewModel.mapScale) // Maintain aspect ratio if needed
+            )
+
+            /*
+             // Render the path points
+            CreatePath(
+                dotSize = 8,
+                spaceBetweenDots = 15,
+                pathPoints = listOf(
+                    Pair(125, 230),
+                    Pair(115, 110),
+                    Pair(70, 110),
+                    Pair(60, -105)
+                ),
+                currentPosition = Pair(
+                    currentNewMethodPosition.value.first.toInt(),
+                    currentNewMethodPosition.value.second.toInt()
+                ),
+                scale = scale,
+                offsetX = offsetX,
+                offsetY = offsetY
+            )
+             */
+
+            Log.i("MAP DATA", "${Pair(xMarker, yMarker)}")
+
+            // Render the red circle with proper scaling and positioning
+            Box(
+                modifier = Modifier
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value,
+                        translationX = offsetX.value + (xMarker * scale.value),
+                        translationY = offsetY.value + (yMarker * scale.value)
                     )
+                    .size(20.dp) // Size of the circle
+                    .background(Color.Red, shape = CircleShape) // Make it a red circle
+            )
+
+            // Render the pointer image with zoom and pan transformations
+            Image(
+                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
+                contentDescription = "Pointer Image",
+                modifier = Modifier
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value,
+                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
+                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
+                    )
+                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
+            )
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UseOfNonLambdaOffsetOverload")
+@Composable
+fun DirectionsAndLocationsScreen_Spaces(navController: NavController, viewModel: MainViewModel) {
+    RefreshExit(viewModel, delay = 100)
+    val showImage by viewModel.showImageFlag.collectAsState()
+
+    var point by remember { mutableIntStateOf(1) }
+
+    val position = when (point) {
+        1 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        2 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 2
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        3 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 3
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        4 -> {
+            val (x, y) = Pair(0.0f, 0.0f) // Coordinates for point 1 // Coordinates for point 4
+            Offset(x.toFloat(), y.toFloat())
+        }
+
+        else -> Offset(0f, 0f) // Default position
+    }
+
+    // -- Control UI elements --
+    // Button
+    val buttonWidthAndHeight = 500.dp
+    val roundedCorners = 12.dp
+    //Text
+    val fontSize = 30.sp
+
+    // MutableState to hold the current position
+    val currentNewMethodPosition = remember {
+        mutableStateOf(
+            viewModel.dynamicCoordinateConvert(
+                viewModel.getPosition().x,
+                viewModel.getPosition().y
+            )
+        )
+    }
+
+    // Observe changes to the position from the viewModel
+    LaunchedEffect(viewModel) {
+        viewModel.positionFlow.collect { newPosition ->
+            val mappedPositionTwo = viewModel.dynamicCoordinateConvert(
+                newPosition.x,
+                newPosition.y
+            )
+
+            currentNewMethodPosition.value = mappedPositionTwo
+
+            delay(100)
+        }
+    }
+
+    var xMarker by remember {mutableFloatStateOf(0f) }
+    var yMarker by remember { mutableFloatStateOf(0f) }
+
+    Scaffold(
+        topBar = {
+            // Top App Bar with "Back to Home" button
+            androidx.compose.material3.TopAppBar(
+                title = { Text("Directions/Locations") },
+                actions = {
+                    // Button in the top-right corner
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.DirectionsAndLocations_Main.name)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
+                        },
+                        modifier = Modifier
+                            .padding(end = 16.dp) // Padding for spacing
+                            .height(60.dp)
+                            .width(120.dp)
+                    ) {
+                        Text("BACK", fontSize = 24.sp)
+                    }
+
+                    // Button in the top-right corner
+                    Button(
+                        onClick = {
+                            navController.navigate(Screen.Home.name)
+                            viewModel.playSoundEffect(buttonSoundEffect_main)
+                            viewModel.setIsExitingScreen(true)
+                        },
+                        modifier = Modifier
+                            .padding(end = 16.dp) // Padding for spacing
+                            .height(60.dp)
+                            .width(120.dp)
+                    ) {
+                        Text("HOME", fontSize = 24.sp)
+                    }
+                }
+            )
+        },
+
+        content = {
+
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                // Sample data - in your case, this will come from viewModel.coordinatesDataForLocations()
+                val locations = viewModel.coordinatesDataForLocations().takeLast(4)
+
+                LazyRow(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp), // Padding around the whole LazyRow
+                    horizontalArrangement = Arrangement.spacedBy(10.dp), // Space between items
+                    verticalAlignment = Alignment.CenterVertically // Center items vertically
+                ) {
+                    items(locations.size) { index ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally, // Aligning content within Column
+                            verticalArrangement = Arrangement.Center // Center items in the Column
+                        ) {
+                            // Button Text as location name or ID
+                            Text(
+                                text = locations[index].first
+                                    .split(" ") // Split the string by spaces
+                                    .joinToString(" ") { it.replaceFirstChar { char -> char.titlecase(Locale.getDefault()) } },
+                                fontSize = 48.sp,  // Adjust as necessary
+                                color = Color.Black,
+                                modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                            )
+
+                            // Button
+                            Button(
+                                onClick = {
+                                    // Play sound effect
+                                    viewModel.playSoundEffect(buttonSoundEffect_main)
+
+                                    // Get coordinates for the button pressed
+                                    val coordinates = viewModel.dynamicCoordinateConvert(
+                                        locations[index].second,  // x coordinate
+                                        locations[index].third   // y coordinate
+                                    )
+                                    // Update marker coordinates
+                                    xMarker = coordinates.first
+                                    yMarker = coordinates.second
+
+                                    // Set image visibility flag
+                                    viewModel.setShowImageFlag(true)
+
+                                    // Update point based on button index or some logic
+                                    point = index + 1
+
+                                    // Query location
+                                    viewModel.queryLocation(locations[index].first)
+                                },
+                                modifier = Modifier
+                                    .width(buttonWidthAndHeight)  // Set button width
+                                    .height(buttonWidthAndHeight)  // Set button height
+                                    .padding(start = 50.dp, end = 50.dp, bottom = 50.dp),  // Add padding around the button itself
+                                shape = RoundedCornerShape(roundedCorners),  // Adjust corner radius
+                            ) {}
+                        }
+                    }
+                }
+            }
+        }
+    )
+
+    if (showImage) { // Display the image and path overlay
+        // State for zoom, pan, and tap gestures
+        val scale = remember { mutableStateOf(1f) }
+        val offsetX = remember { mutableStateOf(0f) }
+        val offsetY = remember { mutableStateOf(0f) }
+
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black)
+                .pointerInput(Unit) {
+                    detectTransformGestures { _, pan, zoom, _ ->
+                        scale.value = (scale.value * zoom).coerceIn(0.5f, 5f) // Limit zoom range
+                        offsetX.value += pan.x
+                        offsetY.value += pan.y
+                    }
+                }
+                .pointerInput(Unit) {
+                    detectTapGestures {
+                        if (!viewModel.isSpeaking.value and !viewModel.isListening.value) {
+                            viewModel.setShowImageFlag(false) // Close image on tap
+                        }
+                    }
+                }
+        ) {
+            // Render the image with zoom and pan transformations
+            Image(
+                painter = BitmapPainter(viewModel.renderedMap), // Replace with your image resource
+                contentDescription = "Displayed Image",
+                modifier = Modifier
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value,
+                        translationX = offsetX.value,
+                        translationY = offsetY.value
+                    )
+                    .aspectRatio(viewModel.mapScale) // Maintain aspect ratio if needed
+            )
+
+            /*
+             // Render the path points
+            CreatePath(
+                dotSize = 8,
+                spaceBetweenDots = 15,
+                pathPoints = listOf(
+                    Pair(125, 230),
+                    Pair(115, 110),
+                    Pair(70, 110),
+                    Pair(60, -105)
+                ),
+                currentPosition = Pair(
+                    currentNewMethodPosition.value.first.toInt(),
+                    currentNewMethodPosition.value.second.toInt()
+                ),
+                scale = scale,
+                offsetX = offsetX,
+                offsetY = offsetY
+            )
+             */
+
+            Log.i("MAP DATA", "${Pair(xMarker, yMarker)}")
+
+            // Render the red circle with proper scaling and positioning
+            Box(
+                modifier = Modifier
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value,
+                        translationX = offsetX.value + (xMarker * scale.value),
+                        translationY = offsetY.value + (yMarker * scale.value)
+                    )
+                    .size(20.dp) // Size of the circle
+                    .background(Color.Red, shape = CircleShape) // Make it a red circle
+            )
+
+            // Render the pointer image with zoom and pan transformations
+            Image(
+                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
+                contentDescription = "Pointer Image",
+                modifier = Modifier
+                    .graphicsLayer(
+                        scaleX = scale.value,
+                        scaleY = scale.value,
+                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
+                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
+                    )
+                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
             )
         }
     }

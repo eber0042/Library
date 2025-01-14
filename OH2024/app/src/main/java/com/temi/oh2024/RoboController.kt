@@ -284,11 +284,11 @@ class RobotController():
         return bitmap
     }
 
-//    private val bitMap = createPixelImageFromListAndroid(
-//        getMapData()?.mapImage!!.data,
-//        getMapData()?.mapImage!!.cols
-//    )
-//    val renderedMap: ImageBitmap = bitMap.asImageBitmap()
+    private val bitMap = createPixelImageFromListAndroid(
+        getMapData()?.mapImage!!.data,
+        getMapData()?.mapImage!!.cols
+    )
+    val renderedMap: ImageBitmap = bitMap.asImageBitmap()
 
     var mapScale = 1f
     val pointerSize = 30
@@ -308,11 +308,106 @@ class RobotController():
             ?: 0.0f
     )
 
-    val xOffset = 5f //(renderedMap.width.toFloat() / 4)
-    val yOffset = 5f //(renderedMap.height.toFloat() / 4) + (pointerSize)
+    val xOffset = (renderedMap.width.toFloat() / 4)
+    val yOffset = (renderedMap.height.toFloat() / 4) + (pointerSize)
 
     val mapPointOne = Pair(-xOffset, -yOffset)
     val mapPointTwo = Pair(+xOffset, +yOffset)
+
+    data class Location(
+        val id: String,
+        val index: Int,  // index of the location in another list
+        val x: Float,    // x-coordinate of the location
+        val y: Float     // y-coordinate of the location
+    )
+
+    // Use the robotController to get the map data
+    private val locations = robot.getMapData()?.locations
+
+    // Create a list to store location triplets
+    private val locationTriplets = mutableListOf<Location>()
+
+    // Function to populate the triplet list with the location data
+    fun populateLocationTriplets() {
+        // Add the ID tags here from the Temi center map to add new locations
+        val locationIDs: MutableList<String> = mutableListOf("lifestyle")//, "business", "nursing", "design", "information services", "self check machine", "library portal pcs", "cafe", "smart kiosk", "smart learning hub", "exhibition space", "art gallery", "learn for life pod")
+
+        for (locationID in locationIDs) {
+            // Find the index of the location by matching the layerId
+            val index = locations?.indexOfFirst { it.layerId == locationID }
+
+            // Check if the location exists
+            if (index != null && index >= 0) {
+                // Get the location from the list
+                val location = locations?.get(index)
+
+                // Extract the coordinates, or use 0f if they are missing
+                val x = location?.layerPoses?.getOrNull(0)?.x ?: 0f
+                val y = location?.layerPoses?.getOrNull(0)?.y ?: 0f
+
+                // Add the location triplet to the list
+                locationTriplets.add(Location(locationID, index, x, y))
+            }
+        }
+    }
+
+    init{ // This will populate the locations at the start of application
+        populateLocationTriplets()
+    }
+
+    // Function to return the coordinates as a list of pairs
+    fun coordinatesDataForLocations(): List<Triple<String, Float, Float>> {
+        return locationTriplets.map { Triple(it.id, it.x, it.y) }
+    }
+
+    val mapPointOneReal = Pair(-xOffset, -(yOffset - (pointerSize)))
+    val mapPointTwoReal = Pair(xOffset, (yOffset - (pointerSize)))
+    val dynamicCoordinateConvert: (Float, Float) -> Pair<Float, Float> = { a, b ->
+        convertCoordinates(
+            a,
+            b,
+            realPointOne,
+            realPointTwo,
+            mapPointOneReal,
+            mapPointTwoReal
+        )
+    }
+
+    private fun convertCoordinates(
+        realX: Float,
+        realY: Float,
+        realPoint1: Pair<Float?, Float?>,
+        realPoint2: Pair<Float?, Float?>,
+        mapPoint1: Pair<Float, Float>,
+        mapPoint2: Pair<Float, Float>,
+    ): Pair<Float, Float> {
+
+        val secondPointReal = Pair(
+            realPoint2.first?.minus(realPoint1.first!!) ?: 0f,
+            realPoint2.second?.minus(realPoint1.second!!) ?: 0f
+        )
+        val secondPointMap = Pair(
+            mapPoint2.first - mapPoint1.first,
+            mapPoint2.second - mapPoint1.second
+        )
+
+        val scaleX =
+            if (secondPointReal.first != 0f) secondPointMap.first / secondPointReal.first else 1f
+        val scaleY =
+            if (secondPointReal.second != 0f) secondPointMap.second / secondPointReal.second else 1f
+
+        Log.i("Testing2", "$scaleX, $scaleY")
+
+        val offsetX = mapPoint1.first
+        val offsetY = mapPoint1.second
+
+        val mappedX = offsetX + (realX - (realPoint1.first!!)) * scaleX
+        val mappedY = offsetY + (realY - (realPoint1.second!!)) * scaleY
+
+        return Pair(mappedX, mappedY)
+    }
+
+
     //************* map data END
 
     init {
@@ -561,6 +656,7 @@ class RobotController():
 //        robot.setHardButtonMode(HardButton.MAIN, HardButton.Mode.ENABLED)
 //        robot.setHardButtonMode(HardButton.POWER, HardButton.Mode.ENABLED)
 //        robot.showTopBar()
+
 
         robot.requestToBeKioskApp()
         robot.setKioskModeOn(false)
