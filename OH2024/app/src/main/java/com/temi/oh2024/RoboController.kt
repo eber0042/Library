@@ -28,6 +28,7 @@ import com.robotemi.sdk.map.MapDataModel
 import com.robotemi.sdk.model.DetectionData
 import com.robotemi.sdk.navigation.model.Position
 import com.robotemi.sdk.navigation.model.SpeedLevel
+import com.robotemi.sdk.permission.Permission
 import com.robotemi.sdk.voice.model.TtsVoice
 import dagger.Module
 import dagger.Provides
@@ -284,11 +285,12 @@ class RobotController():
         return bitmap
     }
 
-    private val bitMap = createPixelImageFromListAndroid(
-        getMapData()?.mapImage!!.data,
-        getMapData()?.mapImage!!.cols
-    )
-    val renderedMap: ImageBitmap = bitMap.asImageBitmap()
+    // Stuff down here is used to render the map
+//    private val bitMap = createPixelImageFromListAndroid(
+//        getMapData()?.mapImage!!.data,
+//        getMapData()?.mapImage!!.cols
+//    )
+//    val renderedMap: ImageBitmap = bitMap.asImageBitmap()
 
     var mapScale = 1f
     val pointerSize = 30
@@ -308,8 +310,12 @@ class RobotController():
             ?: 0.0f
     )
 
-    val xOffset = (renderedMap.width.toFloat() / 4)
-    val yOffset = (renderedMap.height.toFloat() / 4) + (pointerSize)
+    // Use this if you have to render a map
+//    val xOffset = (renderedMap.width.toFloat() / 4)
+//    val yOffset = (renderedMap.height.toFloat() / 4) + (pointerSize)
+
+    val xOffset = (getMapData()?.mapImage!!.rows.toFloat() / 4)
+    val yOffset = (getMapData()?.mapImage!!.cols.toFloat() / 4) + (pointerSize)
 
     val mapPointOne = Pair(-xOffset, -yOffset)
     val mapPointTwo = Pair(+xOffset, +yOffset)
@@ -330,7 +336,11 @@ class RobotController():
     // Function to populate the triplet list with the location data
     fun populateLocationTriplets() {
         // Add the ID tags here from the Temi center map to add new locations
-        val locationIDs: MutableList<String> = mutableListOf("lifestyle")//, "business", "nursing", "design", "information services", "self check machine", "library portal pcs", "cafe", "smart kiosk", "smart learning hub", "exhibition space", "art gallery", "learn for life pod")
+        val locationIDs: MutableList<String> = mutableListOf("lifestyle collection", "management collection r", "life sciences collectionr", "design collection r", "info services", "self check machines", "library portal pcs", "cafe", "smart kiosk", "smart learning hub r", "exhibition space", "art gallery", "learn for life pod")
+
+
+//        val locationIDs: MutableList<String> = mutableListOf("entrance","smart learning hub", "exhibition space", "art gallery", "learn for life pod")
+
 
         for (locationID in locationIDs) {
             // Find the index of the location by matching the layerId
@@ -353,6 +363,7 @@ class RobotController():
 
     init{ // This will populate the locations at the start of application
         populateLocationTriplets()
+        // Log.i("Location Data", "${locationTriplets[0]}")
     }
 
     // Function to return the coordinates as a list of pairs
@@ -360,8 +371,8 @@ class RobotController():
         return locationTriplets.map { Triple(it.id, it.x, it.y) }
     }
 
-    val mapPointOneReal = Pair(-xOffset, -(yOffset - (pointerSize)))
-    val mapPointTwoReal = Pair(xOffset, (yOffset - (pointerSize)))
+    val mapPointOneReal = Pair(-xOffset + (pointerSize), -(yOffset - (pointerSize)))
+    val mapPointTwoReal = Pair(xOffset + (pointerSize), (yOffset - (pointerSize)))
     val dynamicCoordinateConvert: (Float, Float) -> Pair<Float, Float> = { a, b ->
         convertCoordinates(
             a,
@@ -492,6 +503,7 @@ class RobotController():
     }
 
     fun getPosition(): Position {
+        Log.i("Robot Position Data", "${robot.getPosition()}")
         return robot.getPosition()
     }
 
@@ -644,7 +656,8 @@ class RobotController():
 
         robot.setTtsVoice(ttsVoice = TtsVoice(Gender.FEMALE, 1.1F, 4))
         robot.setDetectionModeOn(on = true, distance = 2.0f) // Set how far it can detect stuff
-        robot.setKioskModeOn(on = false)
+//        robot.requestToBeKioskApp()
+        robot.setKioskModeOn(on = true)
         robot.volume = 4 // set volume to 4
 
         robot.setHardButtonMode(HardButton.VOLUME, HardButton.Mode.DISABLED)
@@ -657,10 +670,13 @@ class RobotController():
 //        robot.setHardButtonMode(HardButton.POWER, HardButton.Mode.ENABLED)
 //        robot.showTopBar()
 
-
-        robot.requestToBeKioskApp()
         robot.setKioskModeOn(false)
         Log.i("HOPE!", " In kiosk: ${robot.isKioskModeOn().toString()}")
+        Log.i("HOPE!", " Check permission setting: ${robot.checkSelfPermission(permission = Permission.SETTINGS)}")
+        Log.i("HOPE!", " Battery Data: ${robot.batteryData}")
+        Log.i("HOPE!", " Hard Buttons disabled: ${robot.isHardButtonsDisabled}")
+        Log.i("HOPE!", " Power Buttons Disabled: ${robot.getHardButtonMode(HardButton.POWER)}")
+
     }
 
     override fun onTtsStatusChanged(ttsRequest: TtsRequest) {

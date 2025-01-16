@@ -174,7 +174,7 @@ class MainActivity : ComponentActivity() {
     private var timerJob: Job? = null // Coroutine Job for the timer
     private var lastInteractionTime: Long =
         System.currentTimeMillis() // Track last interaction time
-    private val timeoutPeriod: Long = 3000000 // Timeout period in milliseconds
+    private val timeoutPeriod: Long = 30000 // Timeout period in milliseconds
     private var sampleCols: Int = 0
     private var sampleData: List<Int> = listOf(0)
 
@@ -369,6 +369,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeScreen(navController: NavController, viewModel: MainViewModel) {
     RefreshExit(viewModel)
@@ -1032,6 +1033,7 @@ fun DirectionsAndLocationsScreen_Main(navController: NavController, viewModel: M
     )
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter", "UseOfNonLambdaOffsetOverload")
 @Composable
@@ -1144,7 +1146,7 @@ fun DirectionsAndLocationsScreen_Collections(navController: NavController, viewM
                 contentAlignment = Alignment.Center
             ) {
                 // Sample data - in your case, this will come from viewModel.coordinatesDataForLocations()
-                val locations = viewModel.coordinatesDataForLocations().take(4)  // First 4 locations
+                val locations = viewModel.coordinatesDataForLocations().take(4)
 
                 LazyRow(
                     modifier = Modifier
@@ -1158,19 +1160,106 @@ fun DirectionsAndLocationsScreen_Collections(navController: NavController, viewM
                             horizontalAlignment = Alignment.CenterHorizontally, // Aligning content within Column
                             verticalArrangement = Arrangement.Center // Center items in the Column
                         ) {
-                            // Button Text as location name or ID
-                            Text(
-                                text = locations[index].first
-                                    .split(" ") // Split the string by spaces
-                                    .joinToString(" ") { it.replaceFirstChar { char -> char.titlecase(Locale.getDefault()) } },
-                                fontSize = 48.sp,  // Adjust as necessary
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
-                            )
+
+                            // Switch-like structure using `when`
+                            when (locations[index].first) {
+                                "management collection r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "management collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "life sciences collectionr" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "life sciences collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "design collection r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "design collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "smart learning hub r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "smart learning hub"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                else -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = locations[index].first
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+                            }
 
                             // Button
                             Button(
                                 onClick = {
+                                    // Set the location name for use in location query
+                                    viewModel.setLcoationName(locations[index].first)
+
                                     // Play sound effect
                                     viewModel.playSoundEffect(buttonSoundEffect_main)
 
@@ -1233,11 +1322,11 @@ fun DirectionsAndLocationsScreen_Collections(navController: NavController, viewM
         ) {
             // Render the image with zoom and pan transformations
             Image(
-                painter = BitmapPainter(viewModel.renderedMap), // Replace with your image resource
+                painter = painterResource(R.drawable.library_map_new), // BitmapPainter(viewModel.renderedMap), //painterResource(R.drawable.library_map_new), // Replace with your image resource
                 contentDescription = "Displayed Image",
                 modifier = Modifier
                     .graphicsLayer(
-                        scaleX = scale.value,
+                        scaleX = -scale.value,
                         scaleY = scale.value,
                         translationX = offsetX.value,
                         translationY = offsetY.value
@@ -1267,6 +1356,8 @@ fun DirectionsAndLocationsScreen_Collections(navController: NavController, viewM
              */
 
             Log.i("MAP DATA", "${Pair(xMarker, yMarker)}")
+            Log.i("MAP DATA USER", "${Pair(currentNewMethodPosition.value.first, currentNewMethodPosition.value.second)}")
+
 
             // Render the red circle with proper scaling and positioning
             Box(
@@ -1274,7 +1365,7 @@ fun DirectionsAndLocationsScreen_Collections(navController: NavController, viewM
                     .graphicsLayer(
                         scaleX = scale.value,
                         scaleY = scale.value,
-                        translationX = offsetX.value + (xMarker * scale.value),
+                        translationX = offsetX.value + -(xMarker * scale.value),
                         translationY = offsetY.value + (yMarker * scale.value)
                     )
                     .size(20.dp) // Size of the circle
@@ -1282,18 +1373,65 @@ fun DirectionsAndLocationsScreen_Collections(navController: NavController, viewM
             )
 
             // Render the pointer image with zoom and pan transformations
-            Image(
-                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
-                contentDescription = "Pointer Image",
-                modifier = Modifier
-                    .graphicsLayer(
-                        scaleX = scale.value,
-                        scaleY = scale.value,
-                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
-                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
-                    )
-                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
-            )
+//            Image(
+//                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
+//                contentDescription = "Pointer Image",
+//                modifier = Modifier
+//                    .graphicsLayer(
+//                        scaleX = scale.value,
+//                        scaleY = scale.value,
+//                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
+//                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
+//                    )
+//                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
+//            )
+
+        }
+        val showLocation by viewModel.showLocation.collectAsState()
+        if (showLocation == null) {
+            // Select if they would like to be shown the location that have selected
+            Box(
+                contentAlignment = Alignment.BottomCenter, // Align the Row at the bottom center
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
+                    modifier = Modifier
+                        .padding(50.dp) // Padding for buttons
+                ) {
+                    // Yes Button
+                    Button(
+                        onClick = {
+                            viewModel.playSoundEffect(buttonSoundEffect_tertiary)
+                            viewModel.setShowLocation(true)
+                        },
+                        modifier = Modifier
+                            .width(250.dp) // Set width for the button
+                            .height(175.dp) // Set height for the button
+                            .padding(8.dp), // Padding around the button
+                        shape = RoundedCornerShape(12.dp), // Rounded corners
+                        colors = ButtonDefaults.buttonColors(Color.Green) // Custom background color
+                    ) {
+                        Text("Yes", fontSize = 32.sp, color = Color.Black) // Set text and color
+                    }
+
+                    // No Button
+                    Button(
+                        onClick = {
+                            viewModel.playSoundEffect(buttonSoundEffect_tertiary)
+                            viewModel.setShowLocation(false)
+                        },
+                        modifier = Modifier
+                            .width(250.dp) // Set width for the button
+                            .height(175.dp) // Set height for the button
+                            .padding(8.dp), // Padding around the button
+                        shape = RoundedCornerShape(12.dp), // Rounded corners
+                        colors = ButtonDefaults.buttonColors(Color.Red) // Custom background color
+                    ) {
+                        Text("No", fontSize = 32.sp, color = Color.Black) // Set text and color
+                    }
+                }
+            }
         }
     }
 }
@@ -1410,7 +1548,7 @@ fun DirectionsAndLocationsScreen_Facilities(navController: NavController, viewMo
                 contentAlignment = Alignment.Center
             ) {
                 // Sample data - in your case, this will come from viewModel.coordinatesDataForLocations()
-                val locations = viewModel.coordinatesDataForLocations().slice(4..8)  // Next 5 locations
+                val locations = viewModel.coordinatesDataForLocations().slice(4..8)
 
                 LazyRow(
                     modifier = Modifier
@@ -1424,19 +1562,105 @@ fun DirectionsAndLocationsScreen_Facilities(navController: NavController, viewMo
                             horizontalAlignment = Alignment.CenterHorizontally, // Aligning content within Column
                             verticalArrangement = Arrangement.Center // Center items in the Column
                         ) {
-                            // Button Text as location name or ID
-                            Text(
-                                text = locations[index].first
-                                    .split(" ") // Split the string by spaces
-                                    .joinToString(" ") { it.replaceFirstChar { char -> char.titlecase(Locale.getDefault()) } },
-                                fontSize = 48.sp,  // Adjust as necessary
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
-                            )
+                            // Switch-like structure using `when`
+                            when (locations[index].first) {
+                                "management collection r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "management collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "life sciences collectionr" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "life sciences collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "design collection r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "design collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "smart learning hub r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "smart learning hub"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                else -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = locations[index].first
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+                            }
 
                             // Button
                             Button(
                                 onClick = {
+                                    // Set the location name for use in location query
+                                    viewModel.setLcoationName(locations[index].first)
+
                                     // Play sound effect
                                     viewModel.playSoundEffect(buttonSoundEffect_main)
 
@@ -1499,11 +1723,11 @@ fun DirectionsAndLocationsScreen_Facilities(navController: NavController, viewMo
         ) {
             // Render the image with zoom and pan transformations
             Image(
-                painter = BitmapPainter(viewModel.renderedMap), // Replace with your image resource
+                painter = painterResource(R.drawable.library_map_new), // BitmapPainter(viewModel.renderedMap), //painterResource(R.drawable.library_map_new), // Replace with your image resource
                 contentDescription = "Displayed Image",
                 modifier = Modifier
                     .graphicsLayer(
-                        scaleX = scale.value,
+                        scaleX = -scale.value,
                         scaleY = scale.value,
                         translationX = offsetX.value,
                         translationY = offsetY.value
@@ -1533,6 +1757,8 @@ fun DirectionsAndLocationsScreen_Facilities(navController: NavController, viewMo
              */
 
             Log.i("MAP DATA", "${Pair(xMarker, yMarker)}")
+            Log.i("MAP DATA USER", "${Pair(currentNewMethodPosition.value.first, currentNewMethodPosition.value.second)}")
+
 
             // Render the red circle with proper scaling and positioning
             Box(
@@ -1540,7 +1766,7 @@ fun DirectionsAndLocationsScreen_Facilities(navController: NavController, viewMo
                     .graphicsLayer(
                         scaleX = scale.value,
                         scaleY = scale.value,
-                        translationX = offsetX.value + (xMarker * scale.value),
+                        translationX = offsetX.value + -(xMarker * scale.value),
                         translationY = offsetY.value + (yMarker * scale.value)
                     )
                     .size(20.dp) // Size of the circle
@@ -1548,18 +1774,65 @@ fun DirectionsAndLocationsScreen_Facilities(navController: NavController, viewMo
             )
 
             // Render the pointer image with zoom and pan transformations
-            Image(
-                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
-                contentDescription = "Pointer Image",
-                modifier = Modifier
-                    .graphicsLayer(
-                        scaleX = scale.value,
-                        scaleY = scale.value,
-                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
-                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
-                    )
-                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
-            )
+//            Image(
+//                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
+//                contentDescription = "Pointer Image",
+//                modifier = Modifier
+//                    .graphicsLayer(
+//                        scaleX = scale.value,
+//                        scaleY = scale.value,
+//                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
+//                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
+//                    )
+//                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
+//            )
+
+        }
+        val showLocation by viewModel.showLocation.collectAsState()
+        if (showLocation == null) {
+            // Select if they would like to be shown the location that have selected
+            Box(
+                contentAlignment = Alignment.BottomCenter, // Align the Row at the bottom center
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
+                    modifier = Modifier
+                        .padding(50.dp) // Padding for buttons
+                ) {
+                    // Yes Button
+                    Button(
+                        onClick = {
+                            viewModel.playSoundEffect(buttonSoundEffect_tertiary)
+                            viewModel.setShowLocation(true)
+                        },
+                        modifier = Modifier
+                            .width(250.dp) // Set width for the button
+                            .height(175.dp) // Set height for the button
+                            .padding(8.dp), // Padding around the button
+                        shape = RoundedCornerShape(12.dp), // Rounded corners
+                        colors = ButtonDefaults.buttonColors(Color.Green) // Custom background color
+                    ) {
+                        Text("Yes", fontSize = 32.sp, color = Color.Black) // Set text and color
+                    }
+
+                    // No Button
+                    Button(
+                        onClick = {
+                            viewModel.playSoundEffect(buttonSoundEffect_tertiary)
+                            viewModel.setShowLocation(false)
+                        },
+                        modifier = Modifier
+                            .width(250.dp) // Set width for the button
+                            .height(175.dp) // Set height for the button
+                            .padding(8.dp), // Padding around the button
+                        shape = RoundedCornerShape(12.dp), // Rounded corners
+                        colors = ButtonDefaults.buttonColors(Color.Red) // Custom background color
+                    ) {
+                        Text("No", fontSize = 32.sp, color = Color.Black) // Set text and color
+                    }
+                }
+            }
         }
     }
 }
@@ -1690,19 +1963,105 @@ fun DirectionsAndLocationsScreen_Spaces(navController: NavController, viewModel:
                             horizontalAlignment = Alignment.CenterHorizontally, // Aligning content within Column
                             verticalArrangement = Arrangement.Center // Center items in the Column
                         ) {
-                            // Button Text as location name or ID
-                            Text(
-                                text = locations[index].first
-                                    .split(" ") // Split the string by spaces
-                                    .joinToString(" ") { it.replaceFirstChar { char -> char.titlecase(Locale.getDefault()) } },
-                                fontSize = 48.sp,  // Adjust as necessary
-                                color = Color.Black,
-                                modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
-                            )
+                            // Switch-like structure using `when`
+                            when (locations[index].first) {
+                                "management collection r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "management collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "life sciences collectionr" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "life sciences collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "design collection r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "design collection"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                "smart learning hub r" -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = "smart learning hub"
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+
+                                else -> {
+                                    // Button Text as location name or ID
+                                    Text(
+                                        text = locations[index].first
+                                            .split(" ") // Split the string by spaces
+                                            .joinToString(" ") {
+                                                it.replaceFirstChar { char ->
+                                                    char.titlecase(
+                                                        Locale.getDefault()
+                                                    )
+                                                }
+                                            },
+                                        fontSize = 48.sp,  // Adjust as necessary
+                                        color = Color.Black,
+                                        modifier = Modifier.padding(bottom = 8.dp)  // Add some space below the text
+                                    )
+                                }
+                            }
 
                             // Button
                             Button(
                                 onClick = {
+                                    // Set the location name for use in location query
+                                    viewModel.setLcoationName(locations[index].first)
+
                                     // Play sound effect
                                     viewModel.playSoundEffect(buttonSoundEffect_main)
 
@@ -1765,11 +2124,11 @@ fun DirectionsAndLocationsScreen_Spaces(navController: NavController, viewModel:
         ) {
             // Render the image with zoom and pan transformations
             Image(
-                painter = BitmapPainter(viewModel.renderedMap), // Replace with your image resource
+                painter = painterResource(R.drawable.library_map_new), // BitmapPainter(viewModel.renderedMap), //painterResource(R.drawable.library_map_new), // Replace with your image resource
                 contentDescription = "Displayed Image",
                 modifier = Modifier
                     .graphicsLayer(
-                        scaleX = scale.value,
+                        scaleX = -scale.value,
                         scaleY = scale.value,
                         translationX = offsetX.value,
                         translationY = offsetY.value
@@ -1799,6 +2158,8 @@ fun DirectionsAndLocationsScreen_Spaces(navController: NavController, viewModel:
              */
 
             Log.i("MAP DATA", "${Pair(xMarker, yMarker)}")
+            Log.i("MAP DATA USER", "${Pair(currentNewMethodPosition.value.first, currentNewMethodPosition.value.second)}")
+
 
             // Render the red circle with proper scaling and positioning
             Box(
@@ -1806,26 +2167,73 @@ fun DirectionsAndLocationsScreen_Spaces(navController: NavController, viewModel:
                     .graphicsLayer(
                         scaleX = scale.value,
                         scaleY = scale.value,
-                        translationX = offsetX.value + (xMarker * scale.value),
+                        translationX = offsetX.value + -(xMarker * scale.value),
                         translationY = offsetY.value + (yMarker * scale.value)
                     )
                     .size(20.dp) // Size of the circle
                     .background(Color.Red, shape = CircleShape) // Make it a red circle
             )
 
-            // Render the pointer image with zoom and pan transformations
-            Image(
-                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
-                contentDescription = "Pointer Image",
-                modifier = Modifier
-                    .graphicsLayer(
-                        scaleX = scale.value,
-                        scaleY = scale.value,
-                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
-                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
-                    )
-                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
-            )
+//            // Render the pointer image with zoom and pan transformations
+//            Image(
+//                painter = painterResource(id = R.drawable.pointer), // Replace with your pointer image
+//                contentDescription = "Pointer Image",
+//                modifier = Modifier
+//                    .graphicsLayer(
+//                        scaleX = scale.value,
+//                        scaleY = scale.value,
+//                        translationX = offsetX.value + (currentNewMethodPosition.value.first * scale.value),
+//                        translationY = offsetY.value + (currentNewMethodPosition.value.second * scale.value)
+//                    )
+//                    .size(viewModel.pointerSize.dp) // Maintain consistent pointer size
+//            )
+
+        }
+        val showLocation by viewModel.showLocation.collectAsState()
+        if (showLocation == null) {
+            // Select if they would like to be shown the location that have selected
+            Box(
+                contentAlignment = Alignment.BottomCenter, // Align the Row at the bottom center
+                modifier = Modifier.fillMaxSize()
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(16.dp), // Space between buttons
+                    modifier = Modifier
+                        .padding(50.dp) // Padding for buttons
+                ) {
+                    // Yes Button
+                    Button(
+                        onClick = {
+                            viewModel.playSoundEffect(buttonSoundEffect_tertiary)
+                            viewModel.setShowLocation(true)
+                        },
+                        modifier = Modifier
+                            .width(250.dp) // Set width for the button
+                            .height(175.dp) // Set height for the button
+                            .padding(8.dp), // Padding around the button
+                        shape = RoundedCornerShape(12.dp), // Rounded corners
+                        colors = ButtonDefaults.buttonColors(Color.Green) // Custom background color
+                    ) {
+                        Text("Yes", fontSize = 32.sp, color = Color.Black) // Set text and color
+                    }
+
+                    // No Button
+                    Button(
+                        onClick = {
+                            viewModel.playSoundEffect(buttonSoundEffect_tertiary)
+                            viewModel.setShowLocation(false)
+                        },
+                        modifier = Modifier
+                            .width(250.dp) // Set width for the button
+                            .height(175.dp) // Set height for the button
+                            .padding(8.dp), // Padding around the button
+                        shape = RoundedCornerShape(12.dp), // Rounded corners
+                        colors = ButtonDefaults.buttonColors(Color.Red) // Custom background color
+                    ) {
+                        Text("No", fontSize = 32.sp, color = Color.Black) // Set text and color
+                    }
+                }
+            }
         }
     }
 }

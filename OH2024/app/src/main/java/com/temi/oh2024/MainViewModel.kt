@@ -7,9 +7,11 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.hardware.usb.UsbManager
+import android.os.Build
 import android.os.Environment
 import android.os.storage.StorageManager
 import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.ImageBitmap
@@ -44,6 +46,7 @@ import kotlin.random.Random
 import kotlin.system.exitProcess
 import com.google.gson.Gson
 import java.io.File
+import java.util.Calendar
 
 // Track state
 enum class State {
@@ -149,7 +152,7 @@ class MainViewModel @Inject constructor(
     // ******************** Password Stuff END
 
     //val renderedMap = robotController.renderedMap
-    val renderedMap = robotController.renderedMap
+//    val renderedMap = robotController.renderedMap
     var mapScale = robotController.mapScale
     val pointerSize = robotController.pointerSize
 
@@ -224,7 +227,7 @@ class MainViewModel @Inject constructor(
     private val _isListening = MutableStateFlow(false)
     val isListening: StateFlow<Boolean> = _isListening
 
-    private val _positionFlow = MutableStateFlow(Position(0.0f, 0.0f, 0.0f, 0))
+    private val _positionFlow = MutableStateFlow(Position(0.0f, 0.0f, 0.0f, 5))
     val positionFlow: StateFlow<Position> = _positionFlow.asStateFlow()
 
     private val _isGreetMode = MutableStateFlow(true)
@@ -278,7 +281,7 @@ class MainViewModel @Inject constructor(
     private val detectionDelay =
         1 // it is in seconds and control how long someone needs to be detected before temi will trigger
 
-    val lookDirection = 1f
+    val lookDirection = 0f
 
     // Simulating position updates
     init { // set the while function to true to activate them again
@@ -299,7 +302,15 @@ class MainViewModel @Inject constructor(
                     delay(10000)
                     Log.i("BATTERY LEVEL", "${robotController.getBatteryLevel()}")
                     Log.i("BATTERY LEVEL", "${isValidDetection.value}")
-                    if (robotController.getBatteryLevel() < 30) {
+                    if (robotController.getBatteryLevel() < 15 && robotController.getBatteryLevel() != -1) {
+                        exitProcess(0)
+                    }
+                    val calendar = Calendar.getInstance()
+                    val hour = calendar.get(Calendar.HOUR_OF_DAY)  // 24-hour format
+                    val minute = calendar.get(Calendar.MINUTE)
+
+                    if (hour ==  11 && minute > 20) {
+//                        conditionGate({ goToLocationState != LocationState.COMPLETE && goToLocationState != LocationState.ABORT && !_isValidDetection.value}) // Ensures it get to the location that it needs to.
                         exitProcess(0)
                     }
                 }
@@ -372,35 +383,60 @@ class MainViewModel @Inject constructor(
                 }
             }
 
+            launch{
+                while (true) {
+                    _positionFlow.value = getPosition() // Replace with real logic to fetch position
+                    Log.i("Logging Direction", "${_positionFlow.value}")
+                    buffer()
+                }
+            }
+
             // this while loop will make the temi move to a random pre-defined point
             // For this system, it is not needed
             while (true) {
                 buffer() // Update every second
 
-                if (isGreetMode.value) {
-                    while (true) {
-                        if (!_isValidDetection.value) {
+                if (isGreetMode.value && !_isValidDetection.value) {
 
-                            // add here something to handle the temi being faced forward
+                    robotController.goTo(location = "entrance")
+                    conditionGate({ goToLocationState != LocationState.COMPLETE && goToLocationState != LocationState.ABORT && !_isValidDetection.value}) // Ensures it get to the location that it needs to.
+
+                    while (goToLocationState == LocationState.COMPLETE) {
+                        if (!_isValidDetection.value) {
+                            /*
+                                                        Log.i("TESTING8", "hello")
+//                             add here something to handle the temi being faced forward
                             getPosition().x
-                            if (getPosition().yaw !in 0.80f..1.20f) { // This check should be made to be a bit more robust
-                                Log.i("nodding bug", "${getPosition()}")
-                                robotController.goToPosition(
-                                    Position(
-                                        getPosition().x,
-                                        getPosition().y,
-                                        yaw = lookDirection
-                                    )
-                                )
-                                Log.i("TESTING8", "${getPosition().yaw}")
-                            } // this needed to prevent the temi from twitching its head
+                            /*
+                            //                            if (getPosition().yaw !in 0.80f..1.20f || getPosition().x != 1.583f || getPosition().y !=-1.227144f) { // This check should be made to be a bit more robust
+//                                Log.i("nodding bug", "${getPosition()}")
+//                                robotController.goToPosition(
+//                                    Position(
+////                                        x=1.583f,
+////                                        y=-1.227144f,
+//                                        3.112394f,
+//                                        9.98982f,
+//
+//                                        yaw = lookDirection
+//                                    )
+//                                )
+//
+//
+//
+//                                conditionGate({ goToLocationState != LocationState.COMPLETE && goToLocationState != LocationState.ABORT && !_isValidDetection.value}) // Ensures it get to the location that it needs to.
+//                                Log.i("TESTING8", "${getPosition().yaw}")
+//                            } // this needed to prevent the temi from twitching its head
+                             */
+
+
 
                             if (goToLocationState != LocationState.ABORT && !_isValidDetection.value) {
                                 conditionTimer(
                                     { (yPosition != YDirection.MISSING && isGreetMode.value) },
-                                    5
+                                    30
                                 )
                             }
+                             */
 
                         } else {
                             break
@@ -673,20 +709,41 @@ class MainViewModel @Inject constructor(
         _isGoing.value = false
     }
 
+    private val _showLocation = MutableStateFlow<Boolean?>(null)
+    val showLocation: StateFlow<Boolean?> = _showLocation
+
+    fun setShowLocation(showLocation: Boolean?) {
+        _showLocation.value = showLocation
+    }
+
+    // I didn't need to do this, woops
+    private val _isLocationName = MutableStateFlow("none")
+    val isLocationName: StateFlow<String> = _isLocationName
+
+    fun setLcoationName(locationName: String) {
+        _isLocationName.value = locationName
+    }
+
     fun queryLocation(location: String) {
         viewModelScope.launch {
             _isSpeaking.value = true
+            _showLocation.value = null
+
             var response: String? = null
             while (!isExitingScreen.value) {
                 speakBasic(
-                    "You have selected $location. Would you like me to bring you there? Please just say yes or no.",
+                    "You have selected $location. Would you like me to bring you there? Please press yes or no.",
                     haveFace = false
                 )
-                listen()
-                response = userResponse
+
+                // Down here is what handles the yes and no
+
+                while (showLocation.value == null) { // wait here until user makes a choice
+                    buffer()
+                }
 
                 buffer()
-                if (containsPhraseInOrder(response, reject, true)) {
+                if (showLocation.value == false) {
                     if (isExitingScreen.value) {
                         break
                     }
@@ -695,20 +752,51 @@ class MainViewModel @Inject constructor(
                         haveFace = false
                     )
                     break
-                } else if (containsPhraseInOrder(response, confirmation, true)) {
+                }
+                else if (showLocation.value == true) {
                     speakBasic(
                         "Ok, I will show you too it now.",
                         haveFace = false
                     )
-                    goTo(location.toString(), backwards = true)
-                    robotController.tileAngle(60)
-                    speakBasic(
-                        "We have made it to the location, if you need further help feel free to browse through my options.",
-                        haveFace = false
-                    )
+                    if (isLocationName.value == "management collection r" || isLocationName.value == "life sciences collectionr" || isLocationName.value == "design collection r" || isLocationName.value == "smart learning hub r") {
+
+                        // Switch-like structure using `when`
+                        when (isLocationName.value) {
+                            "management collection r" -> {
+                                goTo("management collection", backwards = true)
+                            }
+                            "life sciences collectionr" -> {
+                                goTo("life sciences collection", backwards = true)
+                            }
+                            "design collection r" -> {
+                                goTo("design collection", backwards = true)
+                            }
+                            "smart learning hub r" -> {
+                                goTo("smart learning hub", backwards = true)
+                            }
+                            else -> {
+                                // Action for any other case
+                                println("Location does not match any specified values: ${isLocationName.value}")
+                            }
+                        }
+                        robotController.tileAngle(60)
+                        speakBasic(
+                            "Sorry, but I am unable to go any further than this, if you go down this corridor you will find what you are looking for in this area. If you need further help feel free to browse through my options.",
+                            haveFace = false
+                        )
+                    }
+                    else {
+                        goTo(location.toString(), backwards = true)
+                        robotController.tileAngle(60)
+                        speakBasic(
+                            "We have made it to the location, if you need further help feel free to browse through my options.",
+                            haveFace = false
+                        )
+                    }
                     _showImageFlag.value = false
                     break
-                } else {
+                }
+                else {
                     Log.i("TESTING", "|$userResponse|")
                     if (response == null) {
                         speakBasic(

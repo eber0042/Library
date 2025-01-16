@@ -42,15 +42,15 @@
         <meta-data
             android:name="com.robotemi.sdk.metadata.SKILL"
             android:value="@string/app_name" />
-        <!--        <meta-data-->
-        <!--            android:name="com.robotemi.sdk.metadata.KIOSK" android:value="true" />-->
+<!--                <meta-data-->
+<!--                    android:name="com.robotemi.sdk.metadata.KIOSK" android:value="true" />-->
         <meta-data
             android:name="@string/metadata_override_conversation_layer"
             android:value="false" />
         <meta-data
             android:name="@string/metadata_permissions"
             android:value="com.robotemi.permission.settings,
-com.robotemi.permission.map" />
+com.robotemi.permission.map, com.robotemi.permission.sequence"/>
     </application>
 
 </manifest>
