@@ -16,6 +16,13 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
     <uses-permission android:name="android.hardware.usb.host" />
 
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM"/>
+    <uses-permission android:name="android.permission.SET_ALARM"/>
+    <uses-permission android:name="android.permission.WAKE_LOCK"/>
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+<!--    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />-->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!--            android:foregroundServiceType="specialUse"-->
 
     <application
         android:name=".MainApplication"
@@ -28,6 +35,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.OH2024"
         tools:targetApi="31">
+        <service android:name=".AlarmService"
+            android:enabled="true"
+            android:exported="false" />  <!-- Use "true" if you need the service to be accessible by other apps -->
         <activity
             android:name=".MainActivity"
             android:exported="true"

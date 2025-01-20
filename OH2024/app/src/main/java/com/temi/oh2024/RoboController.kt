@@ -662,7 +662,7 @@ class RobotController():
 
         robot.setHardButtonMode(HardButton.VOLUME, HardButton.Mode.DISABLED)
         robot.setHardButtonMode(HardButton.MAIN, HardButton.Mode.DISABLED)
-        robot.setHardButtonMode(HardButton.POWER, HardButton.Mode.DISABLED)
+        robot.setHardButtonMode(HardButton.POWER, HardButton.Mode.ENABLED)
         robot.hideTopBar()
 
 //        robot.setHardButtonMode(HardButton.VOLUME, HardButton.Mode.ENABLED)
