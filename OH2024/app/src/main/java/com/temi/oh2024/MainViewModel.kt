@@ -731,10 +731,41 @@ class MainViewModel @Inject constructor(
 
             var response: String? = null
             while (!isExitingScreen.value) {
-                speakBasic(
-                    "You have selected $location. Would you like me to bring you there? Please press yes or no.",
-                    haveFace = false
-                )
+
+                // Switch-like structure using `when`
+                when (location) {
+                    "management collection r" -> {
+                        speakBasic(
+                            "You have selected management collection. Would you like me to bring you there? Please press yes or no.",
+                            haveFace = false
+                        )
+                    }
+                    "life sciences collectionr" -> {
+                        speakBasic(
+                            "You have selected life sciences collection. Would you like me to bring you there? Please press yes or no.",
+                            haveFace = false
+                        )
+                    }
+                    "design collection r" -> {
+                        speakBasic(
+                            "You have selected design collection. Would you like me to bring you there? Please press yes or no.",
+                            haveFace = false
+                        )
+                    }
+                    "smart learning hub r" -> {
+                        speakBasic(
+                            "You have selected smart learning hub. Would you like me to bring you there? Please press yes or no.",
+                            haveFace = false
+                        )
+                    }
+                    else -> {
+                        // Action for any other case
+                        speakBasic(
+                            "You have selected $location. Would you like me to bring you there? Please press yes or no.",
+                            haveFace = false
+                        )
+                    }
+                }
 
                 // Down here is what handles the yes and no
 
