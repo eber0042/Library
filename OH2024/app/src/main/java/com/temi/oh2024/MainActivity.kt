@@ -2,13 +2,6 @@ package com.temi.oh2024
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.app.AlarmManager
-import android.app.NotificationChannel
-import android.app.NotificationManager
-import android.app.PendingIntent
-import android.content.BroadcastReceiver
-import android.content.Context
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Build.VERSION.SDK_INT
 import android.os.Bundle
@@ -17,7 +10,6 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.collection.longSetOf
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.tween
@@ -29,7 +21,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -43,7 +34,6 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -53,7 +43,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
@@ -73,27 +62,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.Calendar
 import java.util.Locale
-import kotlin.math.atan2
-import kotlin.math.cos
-import kotlin.math.pow
-import kotlin.math.roundToInt
-import kotlin.math.sin
-import kotlin.math.sqrt
-import android.provider.Settings
-import android.app.Service
-import android.content.Intent
-import android.os.IBinder
 import android.util.Log
-import android.os.Handler
-import android.os.Looper
-import androidx.core.app.ActivityCompat
-import androidx.core.app.NotificationCompat
-import androidx.core.app.NotificationManagerCompat
-import androidx.core.app.ServiceCompat
-import okhttp3.internal.notify
-
 
 // This is used to record all screens that are currently present in the app
 enum class Screen() {
@@ -244,14 +214,6 @@ class MainActivity : ComponentActivity() {
     @RequiresApi(Build.VERSION_CODES.R)
     override fun onCreate(savedInstanceState: Bundle?) {
 
-        Thread {
-
-            Thread.sleep(30000)
-            Log.i("AlarmService", "**Starting Service**.")
-            val serviceIntent = Intent(this, AlarmService::class.java)
-            this.startForegroundService(serviceIntent)
-        }.start()
-
         super.onCreate(savedInstanceState)
 
         setContent {
@@ -401,116 +363,6 @@ class MainActivity : ComponentActivity() {
 
 ///////////////////////////////////////////////// Stuff bellow is used for handling opening the app at set times
 
-
-// Method does not work for trying to open the application when it is closed
-class AlarmService : Service() {
-
-    private lateinit var handler: Handler
-    private lateinit var runnable: Runnable
-
-    private val CHANNEL_ID = "ALARM_SERVICE_CHANNEL"
-    private val textTitle = "Alarm Service"
-    private val textContent = "The alarm service is running in the background."
-    private val channel_name = "Alarm Service Channel"
-    private val channel_description = "Will wake up applicaiton when alarm triggered"
-
-    private fun createNotificationChannel() {
-        // Create the NotificationChannel, but only on API 26+ because
-        // the NotificationChannel class is not in the Support Library.
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val name = channel_name
-            val descriptionText = channel_description
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
-            val channel = NotificationChannel(CHANNEL_ID, name, importance).apply {
-                description = descriptionText
-            }
-            // Register the channel with the system.
-            val notificationManager: NotificationManager =
-                getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
-        }
-    }
-
-    private fun startForeground() {
-        createNotificationChannel()
-
-        val intent = Intent(this, MainActivity::class.java).apply {
-            Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-        val pendingIntent: PendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        // Create a notification for the foreground service
-        var notification = NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(R.drawable.nyp)
-            .setContentTitle(textTitle)
-            .setContentText(textContent)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setContentIntent(pendingIntent)
-            .setAutoCancel(false)
-
-        // Start the service in the foreground
-//        ServiceCompat.startForeground(this, 1, notification, 0) // Use this if the service is not declared in manifest
-        startForeground(1, notification.build())
-
-    }
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-
-        startForeground()
-
-        // Start a handler to check the time periodically
-        handler = Handler(Looper.getMainLooper())
-        runnable = object : Runnable {
-            override fun run() {
-                // Log and perform time checking
-                Log.d("AlarmService DummyLog", "Checking time in the background.")
-
-                // Check the current time
-                checkTimeAndTriggerAction()
-
-                // Repeat every minute (60,000 ms)
-                handler.postDelayed(this, 60000)
-            }
-        }
-
-        // Start the time-checking loop
-        handler.post(runnable)
-
-        return START_STICKY
-    }
-
-    // Check if the current time matches the target time
-    private fun checkTimeAndTriggerAction() {
-        val calendar = Calendar.getInstance()
-        val targetHour = 15
-        val targetMinute = 28
-
-        if (calendar.get(Calendar.HOUR_OF_DAY) == targetHour && calendar.get(Calendar.MINUTE) == targetMinute) {
-            // Action to perform when the time matches
-            Log.i("AlarmService", "Triggering action at ${calendar.time}")
-            triggerAction()
-        }
-    }
-
-    private fun triggerAction() {
-        // Perform the action you want, e.g., starting an activity
-        val intent = Intent(this, MainActivity::class.java)
-        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
-    }
-
-    override fun onBind(intent: Intent?): IBinder? {
-        return null
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        handler.removeCallbacks(runnable)
-        Log.i("AlarmService", "Service stopped")
-    }
-}
-
-////////////////////////////////////////////////////////////////////////
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -1177,7 +1029,8 @@ fun DirectionsAndLocationsScreen_Main(navController: NavController, viewModel: M
 }
 
 fun buttonImageForLocations(locationName: String): Int {
-    val locationDrawable = when (locationName) {
+
+        val locationDrawable = when (locationName) {
         "lifestyle collection" -> R.drawable.lifestyle_collection
         "management collection r" -> R.drawable.management_collection_r
         "life sciences collectionr" -> R.drawable.life_sciences_collectionr
@@ -1193,6 +1046,27 @@ fun buttonImageForLocations(locationName: String): Int {
         "learn for life pod" -> R.drawable.learn_for_life_pod
         else -> R.drawable.sample_image // Default image for unknown locations
     }
+
+
+    /*
+    val locationDrawable = when (locationName) {
+        "lifestyle collection" -> R.drawable.blank
+        "management collection r" -> R.drawable.blank
+        "life sciences collectionr" -> R.drawable.blank
+        "design collection r" -> R.drawable.blank
+        "info services" -> R.drawable.blank
+        "self check machines" -> R.drawable.blank
+        "library portal pcs" -> R.drawable.blank
+        "cafe" -> R.drawable.blank
+        "smart kiosk" -> R.drawable.blank
+        "smart learning hub r" -> R.drawable.blank
+        "exhibition space" -> R.drawable.blank
+        "art gallery" -> R.drawable.blank
+        "learn for life pod" -> R.drawable.blank
+        else -> R.drawable.blank // Default image for unknown locations
+    }
+     */
+
     return locationDrawable
 }
 
